@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import {
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Equal, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 
@@ -9,11 +13,14 @@ export class UsersService {
 
   create(email: string, password: string) {
     const user = this.repo.create({ email, password });
-    return this.repo.save(user);
+
+    return this.repo.save(user).catch(() => {
+      throw new NotAcceptableException('Email already in use');
+    });
   }
 
   findOne(id: number) {
-    return this.repo.findOneBy({ id });
+    return this.repo.findOneBy({ id: Equal(id) });
   }
 
   find(email: string) {
@@ -35,5 +42,9 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     return this.repo.remove(user);
+  }
+
+  isEmailExists(email: string) {
+    return this.repo.findOne({ where: { email } });
   }
 }
