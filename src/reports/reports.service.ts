@@ -16,9 +16,29 @@ export class ReportsService {
     return this.repo.save(report);
   }
 
-  /** Szacunek ceny — uzupełnij logikę (agregacja po polach z query). */
-  getEstimate(_query: GetEstimateDto) {
-    return {};
+  async createEstimate(estimateDto: GetEstimateDto) {
+    const { make, model, lng, lat, year, mileage } = estimateDto;
+
+    const rows: { price: number }[] = await this.repo
+      .createQueryBuilder('report')
+      .select('report.price', 'price')
+      .where('report.make = :make', { make })
+      .andWhere('report.model = :model', { model })
+      .andWhere('report.lng - :lng BETWEEN -5 AND 5', { lng })
+      .andWhere('report.lat - :lat BETWEEN -5 AND 5', { lat })
+      .andWhere('report.year - :year BETWEEN -3 AND 3', { year })
+      .andWhere('report.approved = :approved', { approved: true })
+      .orderBy('ABS(report.mileage - :mileage)', 'ASC')
+      .setParameter('mileage', mileage)
+      .limit(3)
+      .getRawMany();
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const sum = rows.reduce((acc, row) => acc + row.price, 0);
+    return Math.round(sum / rows.length);
   }
 
   async changeApproval(id: string, approved: boolean) {
