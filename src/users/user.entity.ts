@@ -1,9 +1,19 @@
-import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
+import { Report } from 'src/reports/report.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  Index,
+  OneToMany,
+} from 'typeorm';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ default: true })
+  admin: boolean;
 
   @Column({ unique: true })
   @Index()
@@ -11,4 +21,7 @@ export class User {
 
   @Column()
   password: string;
+
+  @OneToMany(() => Report, (report) => report.user)
+  reports: Report[];
 }
