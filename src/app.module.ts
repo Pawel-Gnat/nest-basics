@@ -5,11 +5,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
-import { User } from './users/user.entity';
-import { Report } from './reports/report.entity';
 
 import cookieSession from 'cookie-session';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import dbConfig from '../ormconfig';
 
 @Module({
   imports: [
@@ -17,15 +16,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'sqlite',
-        database: configService.get('DB_NAME'),
-        entities: [User, Report],
-        synchronize: true,
-      }),
-    }),
+    TypeOrmModule.forRoot(dbConfig),
     UsersModule,
     ReportsModule,
   ],
@@ -43,12 +34,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   ],
 })
 export class AppModule {
+  constructor(private configService: ConfigService) {}
+
   configure(consumer: MiddlewareConsumer) {
+    const cookieKey = this.configService.get<string>('COOKIE_KEY');
+    if (!cookieKey) {
+      throw new Error('COOKIE_KEY is not set');
+    }
+
     consumer
       .apply(
         cookieSession({
-          // keys: [process.env.COOKIE_KEY],
-          keys: ['asdfasdf'],
+          keys: [cookieKey],
           maxAge: 24 * 60 * 60 * 1000,
         }),
       )
