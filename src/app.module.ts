@@ -8,7 +8,7 @@ import { ReportsModule } from './reports/reports.module';
 
 import cookieSession from 'cookie-session';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import dbConfig from '../ormconfig';
+import { TypeOrmConfigService } from './config/typeorm.config';
 
 @Module({
   imports: [
@@ -16,7 +16,9 @@ import dbConfig from '../ormconfig';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
-    TypeOrmModule.forRoot(dbConfig),
+    TypeOrmModule.forRootAsync({
+      useClass: TypeOrmConfigService,
+    }),
     UsersModule,
     ReportsModule,
   ],
