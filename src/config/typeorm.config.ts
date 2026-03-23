@@ -6,10 +6,15 @@ import { DataSourceOptions } from 'typeorm';
 export const NODE_ENV = process.env.NODE_ENV ?? 'development';
 
 export function buildTypeOrmOptions(dbName: string): DataSourceOptions {
+  const isTest = NODE_ENV === 'test';
+  const isProduction = NODE_ENV === 'production';
+
   return {
     type: 'sqlite',
     database: dbName,
-    synchronize: NODE_ENV === 'test',
+    synchronize: isTest,
+    migrationsRun: isProduction,
+    logging: !isProduction,
   };
 }
 
